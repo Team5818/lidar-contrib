@@ -135,7 +135,7 @@ public class Wire {
     }
 
     public void requestFrom(byte address, byte amount) {
-        I2CJNI.i2CRead(port.value, txAddress, rxBuffer, amount);
+        I2CJNI.i2CRead(port.value, address, rxBuffer, amount);
         rxBuffer.position(0).limit(amount);
     }
 
