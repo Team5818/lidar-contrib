@@ -85,7 +85,7 @@ public class Vl53l1xI2c implements Vl53lx {
 
     public Vl53l1xI2c(Port port) {
         this.i2c = PololuI2c.create(port);
-        setAddress(Vl53lx.DEFAULT_ADDRESS);
+        i2c.setAddress(Vl53lx.DEFAULT_ADDRESS);
     }
 
     @Override
@@ -95,6 +95,9 @@ public class Vl53l1xI2c implements Vl53lx {
 
     @Override
     public void setAddress(byte address) {
+        if (address == getAddress()) {
+            return;
+        }
         I2C_SLAVE__DEVICE_ADDRESS.on(i2c).write((byte) (address & 0x7F));
         i2c.setAddress(address);
     }
