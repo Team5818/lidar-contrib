@@ -38,6 +38,7 @@ import static org.rivierarobotics.i2c.impl.vl53l1x.Calculations.timeoutMicroseco
 import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.CAL_CONFIG__VCSEL_START;
 import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.DSS_CONFIG__MANUAL_EFFECTIVE_SPADS_SELECT;
 import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.GPIO__TIO_HV_STATUS;
+import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.I2C_SLAVE__DEVICE_ADDRESS;
 import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.MM_CONFIG__TIMEOUT_MACROP_A;
 import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.MM_CONFIG__TIMEOUT_MACROP_B;
 import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.PHASECAL_CONFIG__OVERRIDE;
@@ -94,6 +95,7 @@ public class Vl53l1xI2c implements Vl53lx {
 
     @Override
     public void setAddress(byte address) {
+        I2C_SLAVE__DEVICE_ADDRESS.on(i2c).write((byte) (address & 0x7F));
         i2c.setAddress(address);
     }
 
