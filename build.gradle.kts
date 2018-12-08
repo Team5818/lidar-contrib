@@ -10,6 +10,10 @@ plugins {
     `maven-publish`
 }
 apply(plugin = "net.ltgt.apt-idea")
+// disable maven upload for now, don't have a good spot for this...
+if (hasProperty("ossrhUsername")) {
+    setProperty("ossrhUsername", "")
+}
 
 inciseBlue {
     util {
