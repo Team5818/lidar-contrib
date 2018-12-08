@@ -4,7 +4,7 @@ import org.gradle.plugins.ide.idea.model.IdeaModel
 
 plugins {
     id("net.researchgate.release") version "2.7.0"
-    id("com.techshroom.incise-blue") version "0.2.1"
+    id("com.techshroom.incise-blue") version "0.2.2"
     id("net.ltgt.apt") version "0.19"
     `java-library`
     `maven-publish`
@@ -46,11 +46,4 @@ dependencies {
     }
 
     testImplementation("junit:junit:4.12")
-}
-
-plugins.withId("idea") {
-    extensions.getByType<IdeaModel>().project.apply {
-        jdkName = "1.8"
-        setLanguageLevel(JavaVersion.VERSION_1_8)
-    }
 }
