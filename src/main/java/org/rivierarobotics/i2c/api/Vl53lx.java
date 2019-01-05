@@ -54,7 +54,7 @@ public interface Vl53lx {
 
     void stopContinuous();
 
-    short read();
+    int read();
 
     boolean dataReady();
 

@@ -1218,7 +1218,7 @@ public enum Vl53l1xReg implements Register {
     private final short address;
 
     Vl53l1xReg(int address) {
-        Preconditions.checkArgument(0 < address && address <= Short.MAX_VALUE, "address must be a positive short");
+        Preconditions.checkArgument(0 <= address && address <= Short.MAX_VALUE, "address must be a positive short");
         this.address = (short) address;
     }
 

@@ -21,25 +21,10 @@
 package org.rivierarobotics.i2c.arcompat;
 
 /**
- * Simplistic API for registers on the I2C target. Usually implemented by an
- * enum for easy iteration.
+ * Represents an I2C port.
  */
-public interface Register {
-    
-    interface Bound {
-        boolean write(short value);
-        boolean write16Bit(int value);
-        boolean write32Bit(long value);
-        // Unsigned values, so one size too large:
-        short read();
-        int read16Bit();
-        long read32Bit();
-    }
+public interface Port {
 
-    short address();
-    
-    default Bound on(PololuI2c i2c) {
-        return new RegisterBinding(address(), i2c);
-    }
+    int value();
 
 }

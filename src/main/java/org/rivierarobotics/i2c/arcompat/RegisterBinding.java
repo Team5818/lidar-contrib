@@ -31,32 +31,32 @@ class RegisterBinding implements Register.Bound {
     }
 
     @Override
-    public boolean write(byte value) {
+    public boolean write(short value) {
         return i2c.writeReg(reg, value);
     }
 
     @Override
-    public boolean write16Bit(short value) {
+    public boolean write16Bit(int value) {
         return i2c.writeReg16Bit(reg, value);
     }
 
     @Override
-    public boolean write32Bit(int value) {
+    public boolean write32Bit(long value) {
         return i2c.writeReg32Bit(reg, value);
     }
 
     @Override
-    public byte read() {
+    public short read() {
         return i2c.readReg(reg);
     }
 
     @Override
-    public short read16Bit() {
+    public int read16Bit() {
         return i2c.readReg16Bit(reg);
     }
 
     @Override
-    public int read32Bit() {
+    public long read32Bit() {
         return i2c.readReg32Bit(reg);
     }
 

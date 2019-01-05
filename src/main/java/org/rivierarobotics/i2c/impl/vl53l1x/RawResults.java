@@ -32,17 +32,17 @@ abstract class RawResults {
     @AutoValue.Builder
     interface Builder {
 
-        Builder rangeStatus(byte rangeStatus);
+        Builder rangeStatus(short rangeStatus);
 
-        Builder streamCount(byte streamCount);
+        Builder streamCount(short streamCount);
 
-        Builder dssActualEffectiveSpadsSd0(short dssActualEffectiveSpadsSd0);
+        Builder dssActualEffectiveSpadsSd0(int dssActualEffectiveSpadsSd0);
 
-        Builder ambientCountRateMcpsSd0(short ambientCountRateMcpsSd0);
+        Builder ambientCountRateMcpsSd0(int ambientCountRateMcpsSd0);
 
-        Builder finalCrosstalkCorrectRangeMmSd0(short finalCrosstalkCorrectRangeMmSd0);
+        Builder finalCrosstalkCorrectRangeMmSd0(int finalCrosstalkCorrectRangeMmSd0);
 
-        Builder peakSignalCountRateCrosstalkCorrectedMcpsSd0(short peakSignalCountRateCrosstalkCorrectedMcpsSd0);
+        Builder peakSignalCountRateCrosstalkCorrectedMcpsSd0(int peakSignalCountRateCrosstalkCorrectedMcpsSd0);
 
         RawResults build();
     }
@@ -50,16 +50,16 @@ abstract class RawResults {
     RawResults() {
     }
 
-    abstract byte rangeStatus();
+    abstract short rangeStatus();
 
-    abstract byte streamCount();
+    abstract short streamCount();
 
-    abstract short dssActualEffectiveSpadsSd0();
+    abstract int dssActualEffectiveSpadsSd0();
 
-    abstract short ambientCountRateMcpsSd0();
+    abstract int ambientCountRateMcpsSd0();
 
-    abstract short finalCrosstalkCorrectRangeMmSd0();
+    abstract int finalCrosstalkCorrectRangeMmSd0();
 
-    abstract short peakSignalCountRateCrosstalkCorrectedMcpsSd0();
+    abstract int peakSignalCountRateCrosstalkCorrectedMcpsSd0();
 
 }

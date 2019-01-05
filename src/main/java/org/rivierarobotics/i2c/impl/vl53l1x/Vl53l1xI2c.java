@@ -20,9 +20,9 @@
 
 package org.rivierarobotics.i2c.impl.vl53l1x;
 
-import edu.wpi.first.wpilibj.I2C.Port;
 import org.rivierarobotics.i2c.api.Vl53lx;
 import org.rivierarobotics.i2c.arcompat.PololuI2c;
+import org.rivierarobotics.i2c.arcompat.Port;
 import org.rivierarobotics.i2c.arcompat.Register;
 import org.rivierarobotics.i2c.arcompat.Wire;
 import org.rivierarobotics.i2c.util.Preconditions;
@@ -65,27 +65,32 @@ import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.VHV_CONFIG__TIMEOU
  * <a href="https://github.com/pololu/vl53l1x-arduino">vl53l1x-arduino</a>
  * library.
  */
-public class Vl53l1xI2c implements Vl53lx {
+public class Vl53l1xI2c implements Vl53lx, AutoCloseable {
 
-    private static final short TIMING_GUARD = 4528;
-    static final short TARGET_RATE = 0x0A00;
+    private static final int TIMING_GUARD = 4528;
+    static final int TARGET_RATE = 0x0A00;
 
     private final PololuI2c i2c;
 
-    private short fastOscFreq;
-    private short oscCalibrateVal;
+    private int fastOscFreq;
+    private int oscCalibrateVal;
     private DistanceMode distanceMode = DistanceMode.UNKNOWN;
     private boolean calibrated;
     private long timeout;
     private long timeoutStart;
     private boolean didTimeout;
-    private byte savedVhvInit;
-    private byte savedVhvTimeout;
+    private short savedVhvInit;
+    private short savedVhvTimeout;
     private RawResults results;
 
     public Vl53l1xI2c(Port port) {
         this.i2c = PololuI2c.create(port);
         i2c.setAddress(Vl53lx.DEFAULT_ADDRESS);
+    }
+
+    @Override
+    public void close() {
+        i2c.close();
     }
 
     @Override
@@ -112,11 +117,11 @@ public class Vl53l1xI2c implements Vl53lx {
         return i2c;
     }
 
-    void fastOscFreq(short fastOscFreq) {
+    void fastOscFreq(int fastOscFreq) {
         this.fastOscFreq = fastOscFreq;
     }
 
-    void oscCalibrateVal(short oscCalibrateVal) {
+    void oscCalibrateVal(int oscCalibrateVal) {
         this.oscCalibrateVal = oscCalibrateVal;
     }
 
@@ -218,16 +223,18 @@ public class Vl53l1xI2c implements Vl53lx {
 
         int macroPeriodMicrosec = currentMacroPeriodA();
 
-        int phasecalTimeoutMclks = timeoutMclksToMicroseconds(100, macroPeriodMicrosec);
+        int phasecalTimeoutMclks = timeoutMicrosecondsToMclks(1000, macroPeriodMicrosec);
         if (phasecalTimeoutMclks > 0xFF) {
             phasecalTimeoutMclks = 0xFF;
         }
 
-        PHASECAL_CONFIG__TIMEOUT_MACROP.on(i2c).write((byte) phasecalTimeoutMclks);
+        PHASECAL_CONFIG__TIMEOUT_MACROP.on(i2c).write((short) phasecalTimeoutMclks);
 
-        MM_CONFIG__TIMEOUT_MACROP_A.on(i2c).write16Bit(encodeTimeout(
-                timeoutMicrosecondsToMclks(1, macroPeriodMicrosec)
-        ));
+        int timeoutMclks = timeoutMicrosecondsToMclks(1, macroPeriodMicrosec);
+        int value = encodeTimeout(
+                timeoutMclks
+        );
+        MM_CONFIG__TIMEOUT_MACROP_A.on(i2c).write16Bit(value);
 
         RANGE_CONFIG__TIMEOUT_MACROP_A.on(i2c).write16Bit(encodeTimeout(
                 timeoutMicrosecondsToMclks(rangeConfigTimeoutMicrosec, macroPeriodMicrosec)
@@ -273,7 +280,7 @@ public class Vl53l1xI2c implements Vl53lx {
     }
 
     @Override
-    public short read() {
+    public int read() {
 
         startTimeout();
         while (!dataReady()) {
@@ -295,17 +302,15 @@ public class Vl53l1xI2c implements Vl53lx {
         SYSTEM__INTERRUPT_CLEAR.on(i2c).write((byte) 1);
 
         // just directly calculate for now, no getRangeData
-        short range = results.finalCrosstalkCorrectRangeMmSd0();
+        int range = results.finalCrosstalkCorrectRangeMmSd0();
 
-        return (short) ((Short.toUnsignedInt(range) * 2011 + 0x0400) / 0x0800);
+        return (range * 2011 + 0x0400) / 0x0800;
     }
 
     private void readResults() {
         Wire wire = i2c.getWire();
 
-        i2c.beginTransmission();
         i2c.askForRegValue(RESULT__RANGE_STATUS.address());
-        i2c.endTransmission();
 
         i2c.request(17);
 
@@ -345,8 +350,8 @@ public class Vl53l1xI2c implements Vl53lx {
         savedVhvInit = vhvConfigInit.read();
         savedVhvTimeout = vhvConfigTimeout.read();
 
-        vhvConfigInit.write((byte) (savedVhvInit & 0x7F));
-        vhvConfigTimeout.write((byte) ((savedVhvTimeout & 0x03) + (3 << 2)));
+        vhvConfigInit.write((short) (savedVhvInit & 0x7F));
+        vhvConfigTimeout.write((short) ((savedVhvTimeout & 0x03) + (3 << 2)));
 
         PHASECAL_CONFIG__OVERRIDE.on(i2c).write((byte) 0x01);
         CAL_CONFIG__VCSEL_START.on(i2c).write(
@@ -355,13 +360,13 @@ public class Vl53l1xI2c implements Vl53lx {
     }
 
     private void updateDss() {
-        short spadCount = results.dssActualEffectiveSpadsSd0();
+        int spadCount = results.dssActualEffectiveSpadsSd0();
 
         if (spadCount != 0) {
             // "Calc total rate per spad"
 
-            int peakSignal = Short.toUnsignedInt(results.peakSignalCountRateCrosstalkCorrectedMcpsSd0());
-            int ambientCount = Short.toUnsignedInt(results.ambientCountRateMcpsSd0());
+            int peakSignal = results.peakSignalCountRateCrosstalkCorrectedMcpsSd0();
+            int ambientCount = results.ambientCountRateMcpsSd0();
             int totalRatePerSpad = peakSignal + ambientCount;
 
             // "clip to 16 bits"
@@ -384,12 +389,12 @@ public class Vl53l1xI2c implements Vl53lx {
                 }
 
                 // "override DSS config"
-                DSS_CONFIG__MANUAL_EFFECTIVE_SPADS_SELECT.on(i2c).write16Bit((short) requiredSpads);
+                DSS_CONFIG__MANUAL_EFFECTIVE_SPADS_SELECT.on(i2c).write16Bit(requiredSpads);
                 return;
             }
         }
 
-        DSS_CONFIG__MANUAL_EFFECTIVE_SPADS_SELECT.on(i2c).write16Bit((short) 0x8000);
+        DSS_CONFIG__MANUAL_EFFECTIVE_SPADS_SELECT.on(i2c).write16Bit(0x8000);
     }
 
     @Override

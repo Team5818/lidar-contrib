@@ -20,14 +20,13 @@
 
 package org.rivierarobotics.i2c.arcompat;
 
-import edu.wpi.first.wpilibj.I2C.Port;
 import org.rivierarobotics.i2c.util.Preconditions;
 
 /**
  * Pololu's APIs for Arduino use extended I2C protocol frequently. This class
  * implements those using {@link Wire}.
  */
-public class PololuI2c {
+public class PololuI2c implements AutoCloseable {
 
     public static PololuI2c create(Port port) {
         return new PololuI2c(new Wire(port));
@@ -49,6 +48,12 @@ public class PololuI2c {
 
     public PololuI2c(Wire wire) {
         this.wire = wire;
+        wire.begin();
+    }
+
+    @Override
+    public void close() {
+        wire.close();
     }
 
     public Wire getWire() {
@@ -81,21 +86,21 @@ public class PololuI2c {
         return success;
     }
 
-    public boolean writeReg(short reg, byte value) {
+    public boolean writeReg(short reg, short value) {
         beginTransmission();
         wire.writeShort(reg);
         wire.write(value);
         return endTransmission();
     }
 
-    public boolean writeReg16Bit(short reg, short value) {
+    public boolean writeReg16Bit(short reg, int value) {
         beginTransmission();
         wire.writeShort(reg);
         wire.writeShort(value);
         return endTransmission();
     }
 
-    public boolean writeReg32Bit(short reg, int value) {
+    public boolean writeReg32Bit(short reg, long value) {
         beginTransmission();
         wire.writeShort(reg);
         wire.writeInt(value);
@@ -109,24 +114,24 @@ public class PololuI2c {
     }
 
     public void request(int amount) {
-        wire.requestFrom(getAddress(), (byte) amount);
+        wire.requestFrom(getAddress(), (byte) amount, false);
     }
 
-    public byte readReg(short reg) {
+    public short readReg(short reg) {
         askForRegValue(reg);
         request(Byte.BYTES);
         return wire.read();
     }
 
-    public short readReg16Bit(short reg) {
+    public int readReg16Bit(short reg) {
         askForRegValue(reg);
         request(Short.BYTES);
         return wire.readShort();
     }
 
-    public short readReg32Bit(short reg) {
+    public long readReg32Bit(short reg) {
         askForRegValue(reg);
         request(Integer.BYTES);
-        return wire.readShort();
+        return wire.readInt();
     }
 }

@@ -20,22 +20,20 @@
 
 package org.rivierarobotics.i2c.arcompat;
 
+import edu.wpi.first.wpilibj.I2C;
+import edu.wpi.first.wpilibj.hal.I2CJNI;
+import org.rivierarobotics.i2c.util.Preconditions;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
 
-import org.rivierarobotics.i2c.util.Preconditions;
-
-import edu.wpi.first.wpilibj.I2C;
-import edu.wpi.first.wpilibj.I2C.Port;
-import edu.wpi.first.wpilibj.hal.I2CJNI;
-
 /**
  * Drop-in replacement for Arduino's Wire class. Only works for master mode.
- * 
+ * <p>
  * Avoids the higher level {@link I2C} since Wire is low level too.
  */
-public class Wire {
+public class Wire implements AutoCloseable {
 
     private final Port port;
 
@@ -49,6 +47,7 @@ public class Wire {
 
     // Wire works by building the arrays using begin/end transmission wrappers.
     private static final int BUFFER_LENGTH = 32;
+    private boolean open = false;
     private boolean transmitting = false;
     private ByteBuffer rxBuffer = ByteBuffer.allocateDirect(BUFFER_LENGTH).order(ByteOrder.BIG_ENDIAN);
     private ByteBuffer txBuffer = ByteBuffer.allocateDirect(BUFFER_LENGTH).order(ByteOrder.BIG_ENDIAN);
@@ -63,7 +62,14 @@ public class Wire {
 
         resetTxBuffer();
 
-        I2CJNI.i2CInitialize(port.value);
+        I2CJNI.i2CInitialize(port.value());
+        open = true;
+    }
+
+    @Override
+    public void close() {
+        I2CJNI.i2CClose(port.value());
+        open = false;
     }
 
     private void resetRxBuffer() {
@@ -74,14 +80,18 @@ public class Wire {
         txBuffer.clear();
     }
 
+    private void checkOpen() {
+        Preconditions.checkState(open, "Not open, please call begin() first");
+    }
+
     /**
      * Start buffering for a transmission to {@code address}.
-     * 
-     * @param address
-     *            the address to send to
+     *
+     * @param address the address to send to
      */
     public void beginTransmission(byte address) {
         Preconditions.checkArgument(address >= 0, "Address may not be null");
+        checkOpen();
         transmitting = true;
         txAddress = address;
         resetTxBuffer();
@@ -93,12 +103,13 @@ public class Wire {
 
     /**
      * End the current transmission and write it.
-     * 
+     *
      * @return {@code true} if successfully transmitted
      */
     public boolean endTransmission() {
+        checkOpen();
         checkTransmitting();
-        boolean success = I2CJNI.i2CWrite(port.value, txAddress, txBuffer, (byte) txBuffer.position()) >= 0;
+        boolean success = I2CJNI.i2CWrite(port.value(), txAddress, txBuffer, (byte) txBuffer.position()) >= 0;
 
         resetTxBuffer();
         transmitting = false;
@@ -110,32 +121,53 @@ public class Wire {
         Preconditions.checkState(txBuffer.remaining() >= amt, "No more room in the buffer");
     }
 
-    public void write(byte data) {
+    public void write(short data) {
+        checkOpen();
         checkTransmitting();
         checkWriteable(Byte.BYTES);
-        txBuffer.put(data);
+        txBuffer.put((byte) (data & 0xFF));
     }
 
-    public void writeShort(short data) {
+    public void writeShort(int data) {
+        checkOpen();
         checkTransmitting();
         checkWriteable(Short.BYTES);
-        txBuffer.putShort(data);
+        txBuffer.put((byte) (data >>> 8 & 0xFF));
+        txBuffer.put((byte) (data & 0xFF));
     }
 
-    public void writeInt(int data) {
+    public void writeInt(long data) {
+        checkOpen();
         checkTransmitting();
         checkWriteable(Integer.BYTES);
-        txBuffer.putInt(data);
+        txBuffer.put((byte) (data >>> 24 & 0xFF));
+        txBuffer.put((byte) (data >>> 16 & 0xFF));
+        txBuffer.put((byte) (data >>> 8 & 0xFF));
+        txBuffer.put((byte) (data & 0xFF));
     }
 
     public void write(byte[] data) {
+        checkOpen();
         checkTransmitting();
         Preconditions.checkState(txBuffer.remaining() >= data.length, "No more room in the buffer");
         txBuffer.put(data);
     }
 
-    public void requestFrom(byte address, byte amount) {
-        I2CJNI.i2CRead(port.value, address, rxBuffer, amount);
+    public void requestFrom(byte address, byte amount, boolean continueTransmission) {
+        Preconditions.checkArgument(0 <= amount && amount <= BUFFER_LENGTH,
+                "amount must be within buffer bounds");
+        checkOpen();
+        if (continueTransmission) {
+            checkTransmitting();
+            I2CJNI.i2CTransaction(port.value(), address,
+                    txBuffer, (byte) txBuffer.position(),
+                    rxBuffer, amount);
+            resetTxBuffer();
+            transmitting = false;
+        } else {
+            I2CJNI.i2CRead(port.value(), address,
+                    rxBuffer, amount);
+        }
         rxBuffer.position(0).limit(amount);
     }
 
@@ -143,19 +175,22 @@ public class Wire {
         Preconditions.checkState(rxBuffer.remaining() >= amt, "No more data available");
     }
 
-    public byte read() {
+    public short read() {
+        checkOpen();
         checkReadable(Byte.BYTES);
-        return rxBuffer.get();
+        return (short) Byte.toUnsignedInt(rxBuffer.get());
     }
 
-    public short readShort() {
+    public int readShort() {
+        checkOpen();
         checkReadable(Short.BYTES);
-        return rxBuffer.getShort();
+        return Short.toUnsignedInt(rxBuffer.getShort());
     }
 
-    public int readInt() {
+    public long readInt() {
+        checkOpen();
         checkReadable(Integer.BYTES);
-        return rxBuffer.getInt();
+        return Integer.toUnsignedLong(rxBuffer.getInt());
     }
 
 }

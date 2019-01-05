@@ -21,25 +21,26 @@
 package org.rivierarobotics.i2c.arcompat;
 
 /**
- * Simplistic API for registers on the I2C target. Usually implemented by an
- * enum for easy iteration.
+ * Ports available on the RoboRIO board.
  */
-public interface Register {
-    
-    interface Bound {
-        boolean write(short value);
-        boolean write16Bit(int value);
-        boolean write32Bit(long value);
-        // Unsigned values, so one size too large:
-        short read();
-        int read16Bit();
-        long read32Bit();
+public enum RoboRioPort implements Port {
+    /**
+     * The I2C port on the RoboRIO's board.
+     */
+    ONBOARD(0),
+    /**
+     * The I2C port on the MXP output.
+     */
+    MXP(1);
+
+    private final int port;
+
+    RoboRioPort(int port) {
+        this.port = port;
     }
 
-    short address();
-    
-    default Bound on(PololuI2c i2c) {
-        return new RegisterBinding(address(), i2c);
+    @Override
+    public int value() {
+        return port;
     }
-
 }

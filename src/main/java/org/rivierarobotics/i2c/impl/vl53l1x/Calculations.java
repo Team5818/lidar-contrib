@@ -22,28 +22,29 @@ package org.rivierarobotics.i2c.impl.vl53l1x;
 
 class Calculations {
 
-    static short encodeTimeout(int timeoutMclks) {
+    static int encodeTimeout(int timeoutMclks) {
         if (timeoutMclks <= 0) {
             return 0;
         }
 
-        int lsByte = timeoutMclks - 1;
-        short msByte = 0;
+        long lsByte = timeoutMclks - 1;
+        int msByte = 0;
 
         while ((lsByte & 0xFFFFFF00) > 0) {
             lsByte >>= 1;
             msByte++;
         }
 
-        return (short) ((msByte << 8) | (lsByte & 0xFF));
+        return (int) ((msByte << 8) | (lsByte & 0xFF));
     }
 
-    static int decodeTimeout(short regVal) {
+    static int decodeTimeout(int regVal) {
         return ((regVal & 0xFF) << (regVal >> 8)) + 1;
     }
 
     static int timeoutMclksToMicroseconds(int timeoutMclks, int macroPeriodMicrosec) {
-        return (int) (((long) timeoutMclks * macroPeriodMicrosec + 0x800L) >> 12);
+        long tmp = ((long) timeoutMclks) * macroPeriodMicrosec;
+        return (int) ((tmp + 0x800L) >> 12);
     }
 
     static int timeoutMicrosecondsToMclks(int timeoutMicrosec, int macroPeriodMicrosec) {
@@ -52,7 +53,7 @@ class Calculations {
 
     // "Calculate macro period in microseconds (12.12 format) with given VCSEL period"
     // TBH I have no idea what this does.
-    static int calcMacroPeriod(short fastOscFreq, byte vcselPeriod) {
+    static int calcMacroPeriod(int fastOscFreq, short vcselPeriod) {
         int pllPeriodMicrosec = (1 << 30) / fastOscFreq;
         int vcselPeriodPclks = (vcselPeriod + 1) << 1;
         int macroPeriodMicrosec = 2304 * pllPeriodMicrosec;
