@@ -24,6 +24,10 @@ import java.util.concurrent.TimeUnit;
 
 public class SleepEasy {
 
+    /**
+     * Wrapper for {@link TimeUnit#sleep(long)} that handles the InterruptedException
+     * by interrupting the current thread again, and throwing an exception.
+     */
     public static void forUnit(long time, TimeUnit unit) {
         try {
             unit.sleep(time);

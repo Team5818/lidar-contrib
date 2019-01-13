@@ -20,7 +20,7 @@
 
 package org.rivierarobotics.i2c.impl.vl53l1x;
 
-import org.rivierarobotics.i2c.api.Vl53lx;
+import org.rivierarobotics.i2c.api.Vl53l1x;
 import org.rivierarobotics.i2c.arcompat.PololuI2c;
 import org.rivierarobotics.i2c.arcompat.Port;
 import org.rivierarobotics.i2c.arcompat.Register;
@@ -65,7 +65,7 @@ import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.VHV_CONFIG__TIMEOU
  * <a href="https://github.com/pololu/vl53l1x-arduino">vl53l1x-arduino</a>
  * library.
  */
-public class Vl53l1xI2c implements Vl53lx, AutoCloseable {
+public class Vl53l1xI2c implements Vl53l1x, AutoCloseable {
 
     private static final int TIMING_GUARD = 4528;
     static final int TARGET_RATE = 0x0A00;
@@ -85,7 +85,7 @@ public class Vl53l1xI2c implements Vl53lx, AutoCloseable {
 
     public Vl53l1xI2c(Port port) {
         this.i2c = PololuI2c.create(port);
-        i2c.setAddress(Vl53lx.DEFAULT_ADDRESS);
+        i2c.setAddress(Vl53l1x.DEFAULT_ADDRESS);
     }
 
     @Override
