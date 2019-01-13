@@ -1,7 +1,7 @@
 /*
- * This file is part of pololu-frc-contrib, licensed under the GNU General Public License (GPLv3).
+ * This file is part of lidar-contrib, licensed under the GNU General Public License (GPLv3).
  *
- * Copyright (c) Riviera Robotics <https://github.com/Team5818>
+ * Copyright (c) Armabot <https://www.armabot.com>
  * Copyright (c) contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,11 +18,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.rivierarobotics.i2c.api;
+package com.armabot.lidar.api;
 
-import org.rivierarobotics.i2c.arcompat.PololuI2c;
-import org.rivierarobotics.i2c.impl.vl53l1x.DistanceMode;
-import org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xI2c;
+import com.armabot.lidar.arcompat.PololuI2c;
+import com.armabot.lidar.impl.vl53l1x.DistanceMode;
+import com.armabot.lidar.impl.vl53l1x.Vl53l1xI2c;
 
 import java.util.concurrent.TimeUnit;
 

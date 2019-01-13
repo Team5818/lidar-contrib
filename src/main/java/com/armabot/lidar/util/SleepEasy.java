@@ -1,7 +1,7 @@
 /*
- * This file is part of pololu-frc-contrib, licensed under the GNU General Public License (GPLv3).
+ * This file is part of lidar-contrib, licensed under the GNU General Public License (GPLv3).
  *
- * Copyright (c) Riviera Robotics <https://github.com/Team5818>
+ * Copyright (c) Armabot <https://www.armabot.com>
  * Copyright (c) contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,13 +18,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.rivierarobotics.i2c.arcompat;
+package com.armabot.lidar.util;
 
-/**
- * Represents an I2C port.
- */
-public interface Port {
+import java.util.concurrent.TimeUnit;
 
-    int value();
+public class SleepEasy {
+
+    /**
+     * Wrapper for {@link TimeUnit#sleep(long)} that handles the InterruptedException
+     * by interrupting the current thread again, and throwing an exception.
+     */
+    public static void forUnit(long time, TimeUnit unit) {
+        try {
+            unit.sleep(time);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+    }
 
 }

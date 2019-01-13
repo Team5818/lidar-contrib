@@ -1,7 +1,7 @@
 /*
- * This file is part of pololu-frc-contrib, licensed under the GNU General Public License (GPLv3).
+ * This file is part of lidar-contrib, licensed under the GNU General Public License (GPLv3).
  *
- * Copyright (c) Riviera Robotics <https://github.com/Team5818>
+ * Copyright (c) Armabot <https://www.armabot.com>
  * Copyright (c) contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,11 +18,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.rivierarobotics.i2c.arcompat;
+package com.armabot.lidar.arcompat;
 
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.hal.I2CJNI;
-import org.rivierarobotics.i2c.util.Preconditions;
+import com.armabot.lidar.util.Preconditions;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

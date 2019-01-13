@@ -1,1 +1,1 @@
-rootProject.name = "pololu-frc-contrib"
+rootProject.name = "lidar-contrib"

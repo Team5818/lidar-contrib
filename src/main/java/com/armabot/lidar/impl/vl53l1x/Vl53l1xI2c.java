@@ -1,7 +1,7 @@
 /*
- * This file is part of pololu-frc-contrib, licensed under the GNU General Public License (GPLv3).
+ * This file is part of lidar-contrib, licensed under the GNU General Public License (GPLv3).
  *
- * Copyright (c) Riviera Robotics <https://github.com/Team5818>
+ * Copyright (c) Armabot <https://www.armabot.com>
  * Copyright (c) contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,53 +18,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.rivierarobotics.i2c.impl.vl53l1x;
+package com.armabot.lidar.impl.vl53l1x;
 
-import org.rivierarobotics.i2c.api.Vl53l1x;
-import org.rivierarobotics.i2c.arcompat.PololuI2c;
-import org.rivierarobotics.i2c.arcompat.Port;
-import org.rivierarobotics.i2c.arcompat.Register;
-import org.rivierarobotics.i2c.arcompat.Wire;
-import org.rivierarobotics.i2c.util.Preconditions;
+import com.armabot.lidar.api.Vl53l1x;
+import com.armabot.lidar.arcompat.PololuI2c;
+import com.armabot.lidar.arcompat.Port;
+import com.armabot.lidar.arcompat.Register;
+import com.armabot.lidar.arcompat.Wire;
+import com.armabot.lidar.util.Preconditions;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static org.rivierarobotics.i2c.impl.vl53l1x.Calculations.calcMacroPeriod;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Calculations.decodeTimeout;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Calculations.encodeTimeout;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Calculations.timeoutMclksToMicroseconds;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Calculations.timeoutMicrosecondsToMclks;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.CAL_CONFIG__VCSEL_START;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.DSS_CONFIG__MANUAL_EFFECTIVE_SPADS_SELECT;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.GPIO__TIO_HV_STATUS;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.I2C_SLAVE__DEVICE_ADDRESS;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.MM_CONFIG__TIMEOUT_MACROP_A;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.MM_CONFIG__TIMEOUT_MACROP_B;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.PHASECAL_CONFIG__OVERRIDE;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.PHASECAL_CONFIG__TIMEOUT_MACROP;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.PHASECAL_RESULT__VCSEL_START;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.RANGE_CONFIG__TIMEOUT_MACROP_A;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.RANGE_CONFIG__TIMEOUT_MACROP_B;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.RANGE_CONFIG__VALID_PHASE_HIGH;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.RANGE_CONFIG__VCSEL_PERIOD_A;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.RANGE_CONFIG__VCSEL_PERIOD_B;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.RESULT__RANGE_STATUS;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.SD_CONFIG__INITIAL_PHASE_SD0;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.SD_CONFIG__INITIAL_PHASE_SD1;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.SD_CONFIG__WOI_SD0;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.SD_CONFIG__WOI_SD1;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.SYSTEM__INTERMEASUREMENT_PERIOD;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.SYSTEM__INTERRUPT_CLEAR;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.SYSTEM__MODE_START;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.VHV_CONFIG__INIT;
-import static org.rivierarobotics.i2c.impl.vl53l1x.Vl53l1xReg.VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND;
+import static com.armabot.lidar.impl.vl53l1x.Calculations.calcMacroPeriod;
+import static com.armabot.lidar.impl.vl53l1x.Calculations.decodeTimeout;
+import static com.armabot.lidar.impl.vl53l1x.Calculations.encodeTimeout;
+import static com.armabot.lidar.impl.vl53l1x.Calculations.timeoutMclksToMicroseconds;
+import static com.armabot.lidar.impl.vl53l1x.Calculations.timeoutMicrosecondsToMclks;
 
 /**
  * A near-direct port of the
  * <a href="https://github.com/pololu/vl53l1x-arduino">vl53l1x-arduino</a>
  * library.
  */
+// The original library is licensed under the terms in LICENSE-pololu.txt
 public class Vl53l1xI2c implements Vl53l1x, AutoCloseable {
 
     private static final int TIMING_GUARD = 4528;
@@ -103,7 +80,7 @@ public class Vl53l1xI2c implements Vl53l1x, AutoCloseable {
         if (address == getAddress()) {
             return;
         }
-        I2C_SLAVE__DEVICE_ADDRESS.on(i2c).write((byte) (address & 0x7F));
+        Vl53l1xReg.I2C_SLAVE__DEVICE_ADDRESS.on(i2c).write((byte) (address & 0x7F));
         i2c.setAddress(address);
     }
 
@@ -176,14 +153,14 @@ public class Vl53l1xI2c implements Vl53l1x, AutoCloseable {
             default:
                 return false;
         }
-        RANGE_CONFIG__VCSEL_PERIOD_A.on(i2c).write(vcselPeriodA);
-        RANGE_CONFIG__VCSEL_PERIOD_B.on(i2c).write(vcselPeriodB);
-        RANGE_CONFIG__VALID_PHASE_HIGH.on(i2c).write(validPhaseHigh);
+        Vl53l1xReg.RANGE_CONFIG__VCSEL_PERIOD_A.on(i2c).write(vcselPeriodA);
+        Vl53l1xReg.RANGE_CONFIG__VCSEL_PERIOD_B.on(i2c).write(vcselPeriodB);
+        Vl53l1xReg.RANGE_CONFIG__VALID_PHASE_HIGH.on(i2c).write(validPhaseHigh);
 
-        SD_CONFIG__WOI_SD0.on(i2c).write(woiSd0);
-        SD_CONFIG__WOI_SD1.on(i2c).write(woiSd1);
-        SD_CONFIG__INITIAL_PHASE_SD0.on(i2c).write(initialPhaseSd0);
-        SD_CONFIG__INITIAL_PHASE_SD1.on(i2c).write(initialPhaseSd1);
+        Vl53l1xReg.SD_CONFIG__WOI_SD0.on(i2c).write(woiSd0);
+        Vl53l1xReg.SD_CONFIG__WOI_SD1.on(i2c).write(woiSd1);
+        Vl53l1xReg.SD_CONFIG__INITIAL_PHASE_SD0.on(i2c).write(initialPhaseSd0);
+        Vl53l1xReg.SD_CONFIG__INITIAL_PHASE_SD1.on(i2c).write(initialPhaseSd1);
 
         setMeasurementTimingBudget(budget);
 
@@ -192,11 +169,11 @@ public class Vl53l1xI2c implements Vl53l1x, AutoCloseable {
     }
 
     private int currentMacroPeriodA() {
-        return calcMacroPeriod(fastOscFreq, RANGE_CONFIG__VCSEL_PERIOD_A.on(i2c).read());
+        return calcMacroPeriod(fastOscFreq, Vl53l1xReg.RANGE_CONFIG__VCSEL_PERIOD_A.on(i2c).read());
     }
 
     private int currentMacroPeriodB() {
-        return calcMacroPeriod(fastOscFreq, RANGE_CONFIG__VCSEL_PERIOD_B.on(i2c).read());
+        return calcMacroPeriod(fastOscFreq, Vl53l1xReg.RANGE_CONFIG__VCSEL_PERIOD_B.on(i2c).read());
     }
 
     @Override
@@ -204,7 +181,7 @@ public class Vl53l1xI2c implements Vl53l1x, AutoCloseable {
         int macroPeriodMicrosec = currentMacroPeriodA();
 
         int rangeConfigTimeoutMicrosec = timeoutMclksToMicroseconds(
-                decodeTimeout(RANGE_CONFIG__TIMEOUT_MACROP_A.on(i2c).read16Bit()),
+                decodeTimeout(Vl53l1xReg.RANGE_CONFIG__TIMEOUT_MACROP_A.on(i2c).read16Bit()),
                 macroPeriodMicrosec);
 
         return 2 * rangeConfigTimeoutMicrosec + TIMING_GUARD;
@@ -228,25 +205,25 @@ public class Vl53l1xI2c implements Vl53l1x, AutoCloseable {
             phasecalTimeoutMclks = 0xFF;
         }
 
-        PHASECAL_CONFIG__TIMEOUT_MACROP.on(i2c).write((short) phasecalTimeoutMclks);
+        Vl53l1xReg.PHASECAL_CONFIG__TIMEOUT_MACROP.on(i2c).write((short) phasecalTimeoutMclks);
 
         int timeoutMclks = timeoutMicrosecondsToMclks(1, macroPeriodMicrosec);
         int value = encodeTimeout(
                 timeoutMclks
         );
-        MM_CONFIG__TIMEOUT_MACROP_A.on(i2c).write16Bit(value);
+        Vl53l1xReg.MM_CONFIG__TIMEOUT_MACROP_A.on(i2c).write16Bit(value);
 
-        RANGE_CONFIG__TIMEOUT_MACROP_A.on(i2c).write16Bit(encodeTimeout(
+        Vl53l1xReg.RANGE_CONFIG__TIMEOUT_MACROP_A.on(i2c).write16Bit(encodeTimeout(
                 timeoutMicrosecondsToMclks(rangeConfigTimeoutMicrosec, macroPeriodMicrosec)
         ));
 
         macroPeriodMicrosec = currentMacroPeriodB();
 
-        MM_CONFIG__TIMEOUT_MACROP_B.on(i2c).write16Bit(encodeTimeout(
+        Vl53l1xReg.MM_CONFIG__TIMEOUT_MACROP_B.on(i2c).write16Bit(encodeTimeout(
                 timeoutMicrosecondsToMclks(1, macroPeriodMicrosec)
         ));
 
-        RANGE_CONFIG__TIMEOUT_MACROP_B.on(i2c).write16Bit(encodeTimeout(
+        Vl53l1xReg.RANGE_CONFIG__TIMEOUT_MACROP_B.on(i2c).write16Bit(encodeTimeout(
                 timeoutMicrosecondsToMclks(rangeConfigTimeoutMicrosec, macroPeriodMicrosec)
         ));
 
@@ -255,28 +232,28 @@ public class Vl53l1xI2c implements Vl53l1x, AutoCloseable {
 
     @Override
     public void startContinuous(int periodMillis) {
-        SYSTEM__INTERMEASUREMENT_PERIOD.on(i2c).write32Bit(periodMillis * oscCalibrateVal);
-        SYSTEM__INTERRUPT_CLEAR.on(i2c).write((byte) 0x01);
-        SYSTEM__MODE_START.on(i2c).write((byte) 0x40);
+        Vl53l1xReg.SYSTEM__INTERMEASUREMENT_PERIOD.on(i2c).write32Bit(periodMillis * oscCalibrateVal);
+        Vl53l1xReg.SYSTEM__INTERRUPT_CLEAR.on(i2c).write((byte) 0x01);
+        Vl53l1xReg.SYSTEM__MODE_START.on(i2c).write((byte) 0x40);
     }
 
     @Override
     public void stopContinuous() {
-        SYSTEM__MODE_START.on(i2c).write((byte) 0x80);
+        Vl53l1xReg.SYSTEM__MODE_START.on(i2c).write((byte) 0x80);
 
 
         calibrated = false;
 
         // "restore vhv configs"
         if (savedVhvInit != 0) {
-            VHV_CONFIG__INIT.on(i2c).write(savedVhvInit);
+            Vl53l1xReg.VHV_CONFIG__INIT.on(i2c).write(savedVhvInit);
         }
         if (savedVhvTimeout != 0) {
-            VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND.on(i2c).write(savedVhvTimeout);
+            Vl53l1xReg.VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND.on(i2c).write(savedVhvTimeout);
         }
 
         // "remove phasecal override"
-        PHASECAL_CONFIG__OVERRIDE.on(i2c).write((byte) 0x00);
+        Vl53l1xReg.PHASECAL_CONFIG__OVERRIDE.on(i2c).write((byte) 0x00);
     }
 
     @Override
@@ -299,7 +276,7 @@ public class Vl53l1xI2c implements Vl53l1x, AutoCloseable {
 
         updateDss();
 
-        SYSTEM__INTERRUPT_CLEAR.on(i2c).write((byte) 1);
+        Vl53l1xReg.SYSTEM__INTERRUPT_CLEAR.on(i2c).write((byte) 1);
 
         // just directly calculate for now, no getRangeData
         int range = results.finalCrosstalkCorrectRangeMmSd0();
@@ -310,7 +287,7 @@ public class Vl53l1xI2c implements Vl53l1x, AutoCloseable {
     private void readResults() {
         Wire wire = i2c.getWire();
 
-        i2c.askForRegValue(RESULT__RANGE_STATUS.address());
+        i2c.askForRegValue(Vl53l1xReg.RESULT__RANGE_STATUS.address());
 
         i2c.request(17);
 
@@ -344,8 +321,8 @@ public class Vl53l1xI2c implements Vl53l1x, AutoCloseable {
     }
 
     private void calibrate() {
-        Register.Bound vhvConfigInit = VHV_CONFIG__INIT.on(i2c);
-        Register.Bound vhvConfigTimeout = VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND.on(i2c);
+        Register.Bound vhvConfigInit = Vl53l1xReg.VHV_CONFIG__INIT.on(i2c);
+        Register.Bound vhvConfigTimeout = Vl53l1xReg.VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND.on(i2c);
 
         savedVhvInit = vhvConfigInit.read();
         savedVhvTimeout = vhvConfigTimeout.read();
@@ -353,9 +330,9 @@ public class Vl53l1xI2c implements Vl53l1x, AutoCloseable {
         vhvConfigInit.write((short) (savedVhvInit & 0x7F));
         vhvConfigTimeout.write((short) ((savedVhvTimeout & 0x03) + (3 << 2)));
 
-        PHASECAL_CONFIG__OVERRIDE.on(i2c).write((byte) 0x01);
-        CAL_CONFIG__VCSEL_START.on(i2c).write(
-                PHASECAL_RESULT__VCSEL_START.on(i2c).read()
+        Vl53l1xReg.PHASECAL_CONFIG__OVERRIDE.on(i2c).write((byte) 0x01);
+        Vl53l1xReg.CAL_CONFIG__VCSEL_START.on(i2c).write(
+                Vl53l1xReg.PHASECAL_RESULT__VCSEL_START.on(i2c).read()
         );
     }
 
@@ -389,17 +366,17 @@ public class Vl53l1xI2c implements Vl53l1x, AutoCloseable {
                 }
 
                 // "override DSS config"
-                DSS_CONFIG__MANUAL_EFFECTIVE_SPADS_SELECT.on(i2c).write16Bit(requiredSpads);
+                Vl53l1xReg.DSS_CONFIG__MANUAL_EFFECTIVE_SPADS_SELECT.on(i2c).write16Bit(requiredSpads);
                 return;
             }
         }
 
-        DSS_CONFIG__MANUAL_EFFECTIVE_SPADS_SELECT.on(i2c).write16Bit(0x8000);
+        Vl53l1xReg.DSS_CONFIG__MANUAL_EFFECTIVE_SPADS_SELECT.on(i2c).write16Bit(0x8000);
     }
 
     @Override
     public boolean dataReady() {
-        return (GPIO__TIO_HV_STATUS.on(i2c).read() & 0x01) == 0;
+        return (Vl53l1xReg.GPIO__TIO_HV_STATUS.on(i2c).read() & 0x01) == 0;
     }
 
     void startTimeout() {
