@@ -20,6 +20,7 @@ tasks.afterReleaseBuild {
 
 tasks.processResources {
     from("LICENSE-vl53l1x.txt")
+    from("LICENSE-vl53l0x.txt")
     from("LICENSE.txt")
 }
 
