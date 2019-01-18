@@ -41,8 +41,8 @@ import static com.armabot.lidar.impl.vl53l1x.Calculations.timeoutMicrosecondsToM
  * <a href="https://github.com/pololu/vl53l1x-arduino">vl53l1x-arduino</a>
  * library.
  */
-// The original library is licensed under the terms in LICENSE-pololu.txt
-public class Vl53l1xI2c implements Vl53l1x, AutoCloseable {
+// The original library is licensed under the terms in LICENSE-vl53l1x.txt
+public class Vl53l1xI2c implements Vl53l1x {
 
     private static final int TIMING_GUARD = 4528;
     static final int TARGET_RATE = 0x0A00;
@@ -61,7 +61,7 @@ public class Vl53l1xI2c implements Vl53l1x, AutoCloseable {
     private RawResults results;
 
     public Vl53l1xI2c(Port port) {
-        this.i2c = PololuI2c.create(port);
+        this.i2c = PololuI2c.create(port, PololuI2c.Addressing.SIXTEEN_BIT);
         i2c.setAddress(Vl53l1x.DEFAULT_ADDRESS);
     }
 

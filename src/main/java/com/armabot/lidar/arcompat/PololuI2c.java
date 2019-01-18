@@ -28,8 +28,25 @@ import com.armabot.lidar.util.Preconditions;
  */
 public class PololuI2c implements AutoCloseable {
 
-    public static PololuI2c create(Port port) {
-        return new PololuI2c(new Wire(port));
+    public enum Addressing {
+        EIGHT_BIT {
+            @Override
+            void writeAddress(int address, Wire wire) {
+                wire.write((short) address);
+            }
+        },
+        SIXTEEN_BIT {
+            @Override
+            void writeAddress(int address, Wire wire) {
+                wire.writeShort(address);
+            }
+        },
+        ;
+         abstract void writeAddress(int address, Wire wire);
+    }
+
+    public static PololuI2c create(Port port, Addressing addressing) {
+        return new PololuI2c(new Wire(port), addressing);
     }
 
     private enum Status {
@@ -43,11 +60,13 @@ public class PololuI2c implements AutoCloseable {
     }
 
     private final Wire wire;
+    private final Addressing addressing;
     private byte address = -1;
     private Status lastStatus = Status.UNSET;
 
-    public PololuI2c(Wire wire) {
+    private PololuI2c(Wire wire, Addressing addressing) {
         this.wire = wire;
+        this.addressing = addressing;
         wire.begin();
     }
 
@@ -88,28 +107,35 @@ public class PololuI2c implements AutoCloseable {
 
     public boolean writeReg(short reg, short value) {
         beginTransmission();
-        wire.writeShort(reg);
+        addressing.writeAddress(reg, wire);
         wire.write(value);
         return endTransmission();
     }
 
     public boolean writeReg16Bit(short reg, int value) {
         beginTransmission();
-        wire.writeShort(reg);
+        addressing.writeAddress(reg, wire);
         wire.writeShort(value);
         return endTransmission();
     }
 
     public boolean writeReg32Bit(short reg, long value) {
         beginTransmission();
-        wire.writeShort(reg);
+        addressing.writeAddress(reg, wire);
         wire.writeInt(value);
+        return endTransmission();
+    }
+
+    public boolean writeRegMulti(short reg, byte[] value) {
+        beginTransmission();
+        addressing.writeAddress(reg, wire);
+        wire.write(value);
         return endTransmission();
     }
 
     public void askForRegValue(short reg) {
         beginTransmission();
-        wire.writeShort(reg);
+        addressing.writeAddress(reg, wire);
         endTransmission();
     }
 
@@ -133,5 +159,11 @@ public class PololuI2c implements AutoCloseable {
         askForRegValue(reg);
         request(Integer.BYTES);
         return wire.readInt();
+    }
+
+    public void readRegMulti(short reg, byte[] out) {
+        askForRegValue(reg);
+        request(out.length);
+        wire.read(out);
     }
 }

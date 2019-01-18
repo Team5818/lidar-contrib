@@ -193,4 +193,10 @@ public class Wire implements AutoCloseable {
         return Integer.toUnsignedLong(rxBuffer.getInt());
     }
 
+    public void read(byte[] out) {
+        checkOpen();
+        checkReadable(out.length);
+        rxBuffer.get(out);
+    }
+
 }

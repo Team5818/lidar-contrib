@@ -18,30 +18,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.armabot.lidar.arcompat;
+package com.armabot.lidar.impl.vl53l0x;
 
-/**
- * Simplistic API for registers on the I2C target. Usually implemented by an
- * enum for easy iteration.
- */
-public interface Register {
-    
-    interface Bound {
-        boolean write(short value);
-        boolean write16Bit(int value);
-        boolean write32Bit(long value);
-        boolean writeMulti(byte[] value);
-        // Unsigned values, so one size too large:
-        short read();
-        int read16Bit();
-        long read32Bit();
-        void readMulti(byte[] result);
+class Calculations {
+    static short decodeVcselPeriod(short value) {
+        return (short) ((value + 1) << 1);
     }
 
-    short address();
-    
-    default Bound on(PololuI2c i2c) {
-        return new RegisterBinding(address(), i2c);
+    static short encodeVcselPeriod(short value) {
+        return (short) ((value >> 1) + 1);
     }
 
+    static int calcMacroPeriod(int vcselPeriodPclks) {
+        return ((2304 * vcselPeriodPclks * 1655) + 500) / 1000;
+    }
 }

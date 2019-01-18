@@ -46,6 +46,11 @@ class RegisterBinding implements Register.Bound {
     }
 
     @Override
+    public boolean writeMulti(byte[] value) {
+        return i2c.writeRegMulti(reg, value);
+    }
+
+    @Override
     public short read() {
         return i2c.readReg(reg);
     }
@@ -60,4 +65,8 @@ class RegisterBinding implements Register.Bound {
         return i2c.readReg32Bit(reg);
     }
 
+    @Override
+    public void readMulti(byte[] result) {
+        i2c.readRegMulti(reg, result);
+    }
 }

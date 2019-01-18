@@ -18,30 +18,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.armabot.lidar.arcompat;
+package com.armabot.lidar.impl.vl53l0x;
 
-/**
- * Simplistic API for registers on the I2C target. Usually implemented by an
- * enum for easy iteration.
- */
-public interface Register {
-    
-    interface Bound {
-        boolean write(short value);
-        boolean write16Bit(int value);
-        boolean write32Bit(long value);
-        boolean writeMulti(byte[] value);
-        // Unsigned values, so one size too large:
-        short read();
-        int read16Bit();
-        long read32Bit();
-        void readMulti(byte[] result);
+class SequenceStepEnables {
+    final boolean tcc, msrc, dss, preRange, finalRange;
+
+    public SequenceStepEnables(boolean tcc, boolean msrc, boolean dss, boolean preRange, boolean finalRange) {
+        this.tcc = tcc;
+        this.msrc = msrc;
+        this.dss = dss;
+        this.preRange = preRange;
+        this.finalRange = finalRange;
     }
-
-    short address();
-    
-    default Bound on(PololuI2c i2c) {
-        return new RegisterBinding(address(), i2c);
-    }
-
 }

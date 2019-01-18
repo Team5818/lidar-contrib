@@ -20,24 +20,26 @@
 
 package com.armabot.lidar.api;
 
+
 import com.armabot.lidar.arcompat.PololuI2c;
-import com.armabot.lidar.impl.vl53l1x.DistanceMode;
-import com.armabot.lidar.impl.vl53l1x.Vl53l1xI2c;
+import com.armabot.lidar.impl.vl53l0x.Vl53l0xI2c;
 
 import java.util.concurrent.TimeUnit;
 
 /**
- * API for interacting with a VL53L1X range-finder.
+ * API for interacting with a VL53L0X range-finder.
  *
  * <p>
- * The suggested implementation to use is {@link Vl53l1xI2c}.
+ * The suggested implementation to use is {@link Vl53l0xI2c}.
  * </p>
  */
-public interface Vl53l1x extends AutoCloseable {
+public interface Vl53l0x extends AutoCloseable {
 
-    /**
-     * The default address that VL53L1X has.
-     */
+    enum VcselPeriodType {
+        VCSEL_PERIOD_PRE_RANGE,
+        VCSEL_PERIOD_FINAL_RANGE
+    }
+
     byte DEFAULT_ADDRESS = 0x29;
 
     /**
@@ -49,7 +51,7 @@ public interface Vl53l1x extends AutoCloseable {
      * Sets the current address to communicate with.
      *
      * <p>
-     * This will change the address of the VL53L1X to match.
+     * This will change the address of the VL53L0X to match.
      * If you only want to change the address of this object,
      * use {@link PololuI2c#setAddress(byte)}.
      * </p>
@@ -70,69 +72,32 @@ public interface Vl53l1x extends AutoCloseable {
      */
     boolean initialize();
 
-    /**
-     * @return the current distance mode
-     */
-    DistanceMode getDistanceMode();
+    @Override
+    void close();
 
-    /**
-     * Sets the distance mode.
-     *
-     * @return {@code true} if it was successfully set
-     */
-    boolean setDistanceMode(DistanceMode mode);
+    boolean setSignalRateLimit(float limitMpcs);
 
-    /**
-     * @return the current measurement timing budget, in microseconds
-     */
-    int getMeasurementTimingBudget();
+    float getSignalRateLimit();
 
-    /**
-     * Sets the measurement timing budget, in microseconds.
-     *
-     * @return {@code true} if it was successfully set
-     */
-    boolean setMeasurementTimingBudget(int budgetMicro);
+    boolean setMeasurementTimingBudget(long budgetMicrosec);
 
-    /**
-     * Starts continuous reading. Use {@link #read()} to retrieve values.
-     */
-    void startContinuous(int periodMillis);
+    long getMeasurementTimingBudget();
 
-    /**
-     * Stops continuous reading.
-     */
+    boolean setVcselPulsePeriod(VcselPeriodType type, short periodPclks);
+
+    short getVcselPulsePeriod(VcselPeriodType type);
+
+    void startContinuous(long periodMilli);
+
     void stopContinuous();
 
-    /**
-     * Reads the next distance measurement.
-     *
-     * <p>
-     * You should verify that this data is valid by checking
-     * {@linkplain #timeoutOccurred() if a timeout has occurred}
-     * </p>
-     *
-     * @return the next measurement, in millimeters
-     */
-    int read();
+    int readRangeContinuousMillimeters();
 
-    /**
-     * @return if there is data available
-     */
-    boolean dataReady();
+    int readRangeSingleMillimeters();
 
-    /**
-     * Sets the timeout for a response from the VL53L1X unit.
-     */
     void setTimeout(long timeout, TimeUnit unit);
 
-    /**
-     * Gets the current timeout, in the requested unit.
-     */
     long getTimeout(TimeUnit unit);
 
     boolean timeoutOccurred();
-
-    @Override
-    void close();
 }
