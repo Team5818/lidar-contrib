@@ -20,8 +20,11 @@
 
 package com.armabot.lidar.impl.vl53l0x;
 
+import com.armabot.lidar.api.Error;
 import com.armabot.lidar.arcompat.PololuI2c;
 import com.armabot.lidar.arcompat.Register;
+import com.armabot.lidar.impl.errors.Timeout;
+import com.armabot.lidar.impl.vl53l0x.errors.NoSpadInfo;
 
 import java.util.Optional;
 
@@ -45,7 +48,7 @@ class Vl53l0xInit {
         this.i2c = target.getI2c();
     }
 
-    boolean initialize() {
+    Optional<Error<?>> initialize() {
         Register.Bound hv = VHV_CONFIG_PAD_SCL_SDA__EXTSUP_HV.on(i2c);
         hv.write((short) (hv.read() | 0x01));
 
@@ -75,7 +78,7 @@ class Vl53l0xInit {
 
         Optional<SpadInfo> spadInfoOptional = target.getSpadInfo();
         if (!spadInfoOptional.isPresent()) {
-            return false;
+            return Optional.of(NoSpadInfo.getInstance());
         }
         SpadInfo spadInfo = spadInfoOptional.get();
 
@@ -144,7 +147,7 @@ class Vl53l0xInit {
 
         SYSTEM_SEQUENCE_CONFIG.on(i2c).write((short) 0x01);
         if (!target.performSingleRefCalibration((short) 0x40)) {
-            return false;
+            return Optional.of(Timeout.waitingFor("VHV calibration"));
         }
 
         // -- VL53L0X_perform_vhv_calibration() end
@@ -153,7 +156,7 @@ class Vl53l0xInit {
 
         SYSTEM_SEQUENCE_CONFIG.on(i2c).write((short) 0x02);
         if (!target.performSingleRefCalibration((short) 0x00)) {
-            return false;
+            return Optional.of(Timeout.waitingFor("Phase calibration"));
         }
 
         // -- VL53L0X_perform_phase_calibration() end
@@ -163,7 +166,7 @@ class Vl53l0xInit {
 
         // VL53L0X_PerformRefCalibration() end
 
-        return true;
+        return Optional.empty();
     }
 
     private void loadTuningSettings() {

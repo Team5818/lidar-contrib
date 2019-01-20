@@ -20,6 +20,7 @@
 
 package com.armabot.lidar.impl.vl53l0x;
 
+import com.armabot.lidar.api.Error;
 import com.armabot.lidar.api.Vl53l0x;
 import com.armabot.lidar.arcompat.PololuI2c;
 import com.armabot.lidar.arcompat.Port;
@@ -53,6 +54,8 @@ import static com.armabot.lidar.impl.vl53l0x.Vl53l0xReg.SYSRANGE_START;
 import static com.armabot.lidar.impl.vl53l0x.Vl53l0xReg.SYSTEM_INTERMEASUREMENT_PERIOD;
 import static com.armabot.lidar.impl.vl53l0x.Vl53l0xReg.SYSTEM_INTERRUPT_CLEAR;
 import static com.armabot.lidar.impl.vl53l0x.Vl53l0xReg.SYSTEM_SEQUENCE_CONFIG;
+import static com.armabot.lidar.util.Preconditions.checkArgument;
+import static com.armabot.lidar.util.Preconditions.checkState;
 
 /**
  * A near-direct port of the
@@ -94,7 +97,7 @@ public class Vl53l0xI2c implements Vl53l0x {
     }
 
     @Override
-    public boolean initialize() {
+    public Optional<Error<?>> initialize() {
         return new Vl53l0xInit(this).initialize();
     }
 
@@ -104,16 +107,13 @@ public class Vl53l0xI2c implements Vl53l0x {
     }
 
     @Override
-    public boolean setSignalRateLimit(float limitMpcs) {
-        if (limitMpcs < 0 || limitMpcs > 511.99) {
-            return false;
-        }
+    public void setSignalRateLimit(float limitMpcs) {
+        checkState(0 <= limitMpcs && limitMpcs <= 511.99, "limitMpcs out of range");
 
         // Q9.7 fixed point format (9 integer bits, 7 fractional bits)
         FINAL_RANGE_CONFIG_MIN_COUNT_RATE_RTN_LIMIT.on(i2c).write16Bit(
                 (int) (limitMpcs * (1 << 7))
         );
-        return true;
     }
 
     @Override
@@ -148,13 +148,12 @@ public class Vl53l0xI2c implements Vl53l0x {
         return microsec;
     }
 
-    @Override
-    public boolean setMeasurementTimingBudget(long budgetMicrosec) {
-        long MinTimingBudget = 20000;
+    private static final long MIN_TIMING_BUDGET = 20000;
 
-        if (budgetMicrosec < MinTimingBudget) {
-            return false;
-        }
+    @Override
+    public void setMeasurementTimingBudget(long budgetMicrosec) {
+        checkArgument(MIN_TIMING_BUDGET <= budgetMicrosec, "budgetMicrosec too small");
+
         SequenceStepEnables enables = getSequenceStepEnables();
         SequenceStepTimeouts timeouts = getSequenceStepTimeouts(enables);
         long usedBudgetMicrosec = initializeBudgetValue(enables, timeouts);
@@ -168,10 +167,7 @@ public class Vl53l0xI2c implements Vl53l0x {
             // will be set. Otherwise the remaining time will be applied to
             // the final range."
 
-            if (usedBudgetMicrosec > budgetMicrosec) {
-                // "Requested timeout too big."
-                return false;
-            }
+            checkArgument(usedBudgetMicrosec <= budgetMicrosec, "Requested timeout too big");
 
             long final_range_timeout_us = budgetMicrosec - usedBudgetMicrosec;
 
@@ -198,7 +194,6 @@ public class Vl53l0xI2c implements Vl53l0x {
 
             measurementTimingBudgetMicrosec = budgetMicrosec; // store for internal reuse
         }
-        return true;
     }
 
     @Override
@@ -216,8 +211,8 @@ public class Vl53l0xI2c implements Vl53l0x {
     }
 
     @Override
-    public boolean setVcselPulsePeriod(VcselPeriodType type, short periodPclks) {
-        short vcsel_period_reg = encodeVcselPeriod(periodPclks);
+    public void setVcselPulsePeriod(VcselPeriodType type, short periodPclks) {
+        short vcselPeriodReg = encodeVcselPeriod(periodPclks);
         SequenceStepEnables enables = getSequenceStepEnables();
         SequenceStepTimeouts timeouts = getSequenceStepTimeouts(enables);
 
@@ -243,13 +238,12 @@ public class Vl53l0xI2c implements Vl53l0x {
                         break;
 
                     default:
-                        // invalid period
-                        return false;
+                        throw new IllegalArgumentException("Invalid period: " + periodPclks);
                 }
                 PRE_RANGE_CONFIG_VALID_PHASE_LOW.on(i2c).write((short) 0x08);
 
                 // apply new VCSEL period
-                PRE_RANGE_CONFIG_VCSEL_PERIOD.on(i2c).write(vcsel_period_reg);
+                PRE_RANGE_CONFIG_VCSEL_PERIOD.on(i2c).write(vcselPeriodReg);
 
                 // update timeouts
 
@@ -318,12 +312,11 @@ public class Vl53l0xI2c implements Vl53l0x {
                         break;
 
                     default:
-                        // invalid period
-                        return false;
+                        throw new IllegalArgumentException("Invalid period: " + periodPclks);
                 }
 
                 // apply new VCSEL period
-                FINAL_RANGE_CONFIG_VCSEL_PERIOD.on(i2c).write(vcsel_period_reg);
+                FINAL_RANGE_CONFIG_VCSEL_PERIOD.on(i2c).write(vcselPeriodReg);
 
                 // update timeouts
 
@@ -349,7 +342,7 @@ public class Vl53l0xI2c implements Vl53l0x {
                 break;
             default:
                 // invalid type
-                return false;
+                throw new IllegalArgumentException("Invalid type: " + type);
         }
 
         // "Finally, the timing budget must be re-applied"
@@ -365,8 +358,6 @@ public class Vl53l0xI2c implements Vl53l0x {
         SYSTEM_SEQUENCE_CONFIG.on(i2c).write(sequence_config);
 
         // VL53L0X_perform_phase_calibration() end
-
-        return true;
     }
 
     @Override

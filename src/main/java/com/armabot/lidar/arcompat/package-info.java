@@ -21,4 +21,5 @@
 /**
  * Provides Arduino compatibility classes.
  */
+@com.techshroom.jsr305.plus.NonnullByDefault
 package com.armabot.lidar.arcompat;

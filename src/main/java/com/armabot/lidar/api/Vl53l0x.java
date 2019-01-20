@@ -24,6 +24,7 @@ package com.armabot.lidar.api;
 import com.armabot.lidar.arcompat.PololuI2c;
 import com.armabot.lidar.impl.vl53l0x.Vl53l0xI2c;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -66,24 +67,24 @@ public interface Vl53l0x extends AutoCloseable {
     PololuI2c getI2c();
 
     /**
-     * Initialize, check if we're talking to the right module, etc.
+     * Initialize. Check if we're talking to the right module, etc.
      *
-     * @return {@code true} if the module is initialized
+     * @return {@link Optional#empty()} if the module is initialized
      */
-    boolean initialize();
+    Optional<Error<?>> initialize();
 
     @Override
     void close();
 
-    boolean setSignalRateLimit(float limitMpcs);
+    void setSignalRateLimit(float limitMpcs);
 
     float getSignalRateLimit();
 
-    boolean setMeasurementTimingBudget(long budgetMicrosec);
+    void setMeasurementTimingBudget(long budgetMicrosec);
 
     long getMeasurementTimingBudget();
 
-    boolean setVcselPulsePeriod(VcselPeriodType type, short periodPclks);
+    void setVcselPulsePeriod(VcselPeriodType type, short periodPclks);
 
     short getVcselPulsePeriod(VcselPeriodType type);
 

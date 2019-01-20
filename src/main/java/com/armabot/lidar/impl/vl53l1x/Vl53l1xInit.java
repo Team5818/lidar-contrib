@@ -20,11 +20,14 @@
 
 package com.armabot.lidar.impl.vl53l1x;
 
-import edu.wpi.first.wpilibj.DriverStation;
+import com.armabot.lidar.api.Error;
 import com.armabot.lidar.arcompat.PololuI2c;
 import com.armabot.lidar.arcompat.Register;
+import com.armabot.lidar.impl.errors.IncorrectModelId;
+import com.armabot.lidar.impl.errors.Timeout;
 import com.armabot.lidar.util.SleepEasy;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -40,17 +43,10 @@ class Vl53l1xInit {
         this.i2c = target.getI2c();
     }
 
-    private String fmtAddr() {
-        return String.format("0x%02x", i2c.getAddress());
-    }
-
-    boolean initialize() {
+    Optional<Error<?>> initialize() {
         int modelId = Vl53l1xReg.IDENTIFICATION__MODEL_ID.on(i2c).read16Bit();
         if (modelId != MODEL_ID) {
-            String modelStr = String.format("0x%04x", modelId);
-            DriverStation.reportError("VL53L1X: Incorrect model id on address "
-                    + fmtAddr() + " (got " + modelStr + ")", false);
-            return false;
+            return Optional.of(IncorrectModelId.of("VL53L1X", MODEL_ID, modelId));
         }
 
         Vl53l1xReg.SOFT_RESET.on(i2c).write((byte) 0);
@@ -61,8 +57,7 @@ class Vl53l1xInit {
         SleepEasy.forUnit(1, TimeUnit.SECONDS);
 
         if (!awaitSystemBooted()) {
-            DriverStation.reportError("VL53L1X: System did not boot " + fmtAddr(), false);
-            return false;
+            return Optional.of(Timeout.waitingFor("system boot"));
         }
 
         // set io_2v8
@@ -84,7 +79,7 @@ class Vl53l1xInit {
                 (short) (Vl53l1xReg.MM_CONFIG__OUTER_OFFSET_MM.on(i2c).read16Bit() * 4)
         );
 
-        return true;
+        return Optional.empty();
     }
 
     private boolean awaitSystemBooted() {
@@ -116,7 +111,7 @@ class Vl53l1xInit {
         Vl53l1xReg.SYSTEM__THRESH_RATE_LOW.on(i2c).write16Bit(0);
         Vl53l1xReg.DSS_CONFIG__APERTURE_ATTENUATION.on(i2c).write((short) 0x38);
 
-        Vl53l1xReg.RANGE_CONFIG__SIGMA_THRESH.on(i2c).write16Bit( 360);
+        Vl53l1xReg.RANGE_CONFIG__SIGMA_THRESH.on(i2c).write16Bit(360);
         Vl53l1xReg.RANGE_CONFIG__MIN_COUNT_RATE_RTN_LIMIT_MCPS.on(i2c).write16Bit((short) 192);
 
         Vl53l1xReg.SYSTEM__GROUPED_PARAMETER_HOLD_0.on(i2c).write((short) 1);

@@ -49,7 +49,7 @@ repositories {
 }
 
 dependencies {
-    commonLib("edu.wpi.first.wpilibj", "wpilibj", "2018.4.1") {
+    commonLib("edu.wpi.first.hal", "hal", "2019.2.1") {
         api(lib("java"))
     }
 
@@ -57,6 +57,8 @@ dependencies {
         compileOnly(lib("annotations"))
         annotationProcessor(lib())
     }
+
+    compileOnly("com.techshroom", "jsr305-plus", "0.0.1")
 
     testImplementation("junit:junit:4.12")
 }

@@ -20,14 +20,15 @@
 
 package com.armabot.lidar.impl.vl53l1x;
 
+import com.armabot.lidar.api.Error;
 import com.armabot.lidar.api.Vl53l1x;
 import com.armabot.lidar.arcompat.PololuI2c;
 import com.armabot.lidar.arcompat.Port;
 import com.armabot.lidar.arcompat.Register;
 import com.armabot.lidar.arcompat.Wire;
-import com.armabot.lidar.util.Preconditions;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static com.armabot.lidar.impl.vl53l1x.Calculations.calcMacroPeriod;
@@ -35,6 +36,7 @@ import static com.armabot.lidar.impl.vl53l1x.Calculations.decodeTimeout;
 import static com.armabot.lidar.impl.vl53l1x.Calculations.encodeTimeout;
 import static com.armabot.lidar.impl.vl53l1x.Calculations.timeoutMclksToMicroseconds;
 import static com.armabot.lidar.impl.vl53l1x.Calculations.timeoutMicrosecondsToMclks;
+import static com.armabot.lidar.util.Preconditions.checkArgument;
 
 /**
  * A near-direct port of the
@@ -85,7 +87,7 @@ public class Vl53l1xI2c implements Vl53l1x {
     }
 
     @Override
-    public boolean initialize() {
+    public Optional<Error<?>> initialize() {
         return new Vl53l1xInit(this).initialize();
     }
 
@@ -108,7 +110,7 @@ public class Vl53l1xI2c implements Vl53l1x {
     }
 
     @Override
-    public boolean setDistanceMode(DistanceMode mode) {
+    public void setDistanceMode(DistanceMode mode) {
         int budget = getMeasurementTimingBudget();
 
         byte vcselPeriodA;
@@ -151,7 +153,7 @@ public class Vl53l1xI2c implements Vl53l1x {
                 break;
             case UNKNOWN:
             default:
-                return false;
+                throw new IllegalArgumentException("Unknown DistanceMode: " + mode);
         }
         Vl53l1xReg.RANGE_CONFIG__VCSEL_PERIOD_A.on(i2c).write(vcselPeriodA);
         Vl53l1xReg.RANGE_CONFIG__VCSEL_PERIOD_B.on(i2c).write(vcselPeriodB);
@@ -165,7 +167,6 @@ public class Vl53l1xI2c implements Vl53l1x {
         setMeasurementTimingBudget(budget);
 
         distanceMode = mode;
-        return true;
     }
 
     private int currentMacroPeriodA() {
@@ -188,15 +189,11 @@ public class Vl53l1xI2c implements Vl53l1x {
     }
 
     @Override
-    public boolean setMeasurementTimingBudget(int budgetMicro) {
-        if (budgetMicro < TIMING_GUARD) {
-            return false;
-        }
+    public void setMeasurementTimingBudget(int budgetMicro) {
+        checkArgument(TIMING_GUARD <= budgetMicro, "budgetMicro too small");
 
         int rangeConfigTimeoutMicrosec = (budgetMicro - TIMING_GUARD) / 2;
-        if (rangeConfigTimeoutMicrosec > 550_000) {
-            return false;
-        }
+        checkArgument(rangeConfigTimeoutMicrosec <= 550_000, "budgetMicro too large");
 
         int macroPeriodMicrosec = currentMacroPeriodA();
 
@@ -226,8 +223,6 @@ public class Vl53l1xI2c implements Vl53l1x {
         Vl53l1xReg.RANGE_CONFIG__TIMEOUT_MACROP_B.on(i2c).write16Bit(encodeTimeout(
                 timeoutMicrosecondsToMclks(rangeConfigTimeoutMicrosec, macroPeriodMicrosec)
         ));
-
-        return true;
     }
 
     @Override
@@ -397,7 +392,7 @@ public class Vl53l1xI2c implements Vl53l1x {
 
     @Override
     public void setTimeout(long timeout, TimeUnit unit) {
-        Preconditions.checkArgument(timeout >= 0, "Timeout must be positive");
+        checkArgument(timeout >= 0, "Timeout must be positive");
         Objects.requireNonNull(unit, "unit");
         this.timeout = unit.toNanos(timeout);
     }

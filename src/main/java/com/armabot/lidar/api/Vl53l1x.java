@@ -24,6 +24,7 @@ import com.armabot.lidar.arcompat.PololuI2c;
 import com.armabot.lidar.impl.vl53l1x.DistanceMode;
 import com.armabot.lidar.impl.vl53l1x.Vl53l1xI2c;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -64,11 +65,11 @@ public interface Vl53l1x extends AutoCloseable {
     PololuI2c getI2c();
 
     /**
-     * Initialize, check if we're talking to the right module, etc.
+     * Initialize. Check if we're talking to the right module, etc.
      *
-     * @return {@code true} if the module is initialized
+     * @return {@link Optional#empty()} if the module is initialized
      */
-    boolean initialize();
+    Optional<Error<?>> initialize();
 
     /**
      * @return the current distance mode
@@ -77,10 +78,8 @@ public interface Vl53l1x extends AutoCloseable {
 
     /**
      * Sets the distance mode.
-     *
-     * @return {@code true} if it was successfully set
      */
-    boolean setDistanceMode(DistanceMode mode);
+    void setDistanceMode(DistanceMode mode);
 
     /**
      * @return the current measurement timing budget, in microseconds
@@ -89,10 +88,8 @@ public interface Vl53l1x extends AutoCloseable {
 
     /**
      * Sets the measurement timing budget, in microseconds.
-     *
-     * @return {@code true} if it was successfully set
      */
-    boolean setMeasurementTimingBudget(int budgetMicro);
+    void setMeasurementTimingBudget(int budgetMicro);
 
     /**
      * Starts continuous reading. Use {@link #read()} to retrieve values.

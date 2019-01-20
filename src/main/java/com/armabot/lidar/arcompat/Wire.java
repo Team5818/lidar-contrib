@@ -20,9 +20,8 @@
 
 package com.armabot.lidar.arcompat;
 
-import edu.wpi.first.wpilibj.I2C;
-import edu.wpi.first.wpilibj.hal.I2CJNI;
 import com.armabot.lidar.util.Preconditions;
+import edu.wpi.first.hal.I2CJNI;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -31,7 +30,7 @@ import java.util.Objects;
 /**
  * Drop-in replacement for Arduino's Wire class. Only works for master mode.
  * <p>
- * Avoids the higher level {@link I2C} since Wire is low level too.
+ * Avoids the higher level I2C since Wire is low level too.
  */
 public class Wire implements AutoCloseable {
 
