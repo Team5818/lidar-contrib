@@ -23,6 +23,7 @@ package com.armabot.lidar.impl.vl53l0x;
 import com.armabot.lidar.api.Error;
 import com.armabot.lidar.arcompat.PololuI2c;
 import com.armabot.lidar.arcompat.Register;
+import com.armabot.lidar.impl.errors.IncorrectModelId;
 import com.armabot.lidar.impl.errors.Timeout;
 import com.armabot.lidar.impl.vl53l0x.errors.NoSpadInfo;
 
@@ -40,6 +41,7 @@ import static com.armabot.lidar.impl.vl53l0x.Vl53l0xReg.SYSTEM_SEQUENCE_CONFIG;
 import static com.armabot.lidar.impl.vl53l0x.Vl53l0xReg.VHV_CONFIG_PAD_SCL_SDA__EXTSUP_HV;
 
 class Vl53l0xInit {
+    private static final int MODEL_ID = 0xEEAA;
     private final Vl53l0xI2c target;
     private final PololuI2c i2c;
 
@@ -49,6 +51,11 @@ class Vl53l0xInit {
     }
 
     Optional<Error<?>> initialize() {
+        // no i2c validation for 0x
+//        int modelId = i2c.readReg16Bit((short) 0xC0);
+//        if (modelId != MODEL_ID) {
+//            return Optional.of(IncorrectModelId.of("VL53L0X", MODEL_ID, modelId));
+//        }
         Register.Bound hv = VHV_CONFIG_PAD_SCL_SDA__EXTSUP_HV.on(i2c);
         hv.write((short) (hv.read() | 0x01));
 

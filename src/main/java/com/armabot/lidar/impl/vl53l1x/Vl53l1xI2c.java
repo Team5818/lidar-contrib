@@ -37,6 +37,7 @@ import static com.armabot.lidar.impl.vl53l1x.Calculations.encodeTimeout;
 import static com.armabot.lidar.impl.vl53l1x.Calculations.timeoutMclksToMicroseconds;
 import static com.armabot.lidar.impl.vl53l1x.Calculations.timeoutMicrosecondsToMclks;
 import static com.armabot.lidar.util.Preconditions.checkArgument;
+import static com.armabot.lidar.util.Preconditions.checkState;
 
 /**
  * A near-direct port of the
@@ -253,14 +254,7 @@ public class Vl53l1xI2c implements Vl53l1x {
 
     @Override
     public int read() {
-
-        startTimeout();
-        while (!dataReady()) {
-            if (currentlyTimedOut()) {
-                setTimeoutFlag();
-                return 0;
-            }
-        }
+        checkState(dataReady(), "Data not ready, check dataReady() first.");
 
         readResults();
 

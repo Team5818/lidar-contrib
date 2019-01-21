@@ -92,12 +92,20 @@ public interface Vl53l0x extends AutoCloseable {
 
     void stopContinuous();
 
+    boolean dataReady();
+
     int readRangeContinuousMillimeters();
 
     int readRangeSingleMillimeters();
 
+    /**
+     * Sets the timeout for a response from the VL53L0X unit.
+     */
     void setTimeout(long timeout, TimeUnit unit);
 
+    /**
+     * Gets the current timeout, in the requested unit.
+     */
     long getTimeout(TimeUnit unit);
 
     boolean timeoutOccurred();

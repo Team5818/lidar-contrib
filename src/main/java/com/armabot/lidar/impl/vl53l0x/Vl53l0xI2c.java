@@ -420,15 +420,13 @@ public class Vl53l0xI2c implements Vl53l0x {
     }
 
     @Override
-    public int readRangeContinuousMillimeters() {
-        startTimeout();
-        while ((RESULT_INTERRUPT_STATUS.on(i2c).read() & 0x07) == 0) {
-            if (currentlyTimedOut()) {
-                setTimeoutFlag();
-                return 65535;
-            }
-        }
+    public boolean dataReady() {
+        return (RESULT_INTERRUPT_STATUS.on(i2c).read() & 0x07) == 0;
+    }
 
+    @Override
+    public int readRangeContinuousMillimeters() {
+        checkState(dataReady(), "Data not ready, check dataReady() first.");
         // assumptions: Linearity Corrective Gain is 1000 (default);
         // fractional ranging is not enabled
         int range = i2c.readReg16Bit((short) (RESULT_RANGE_STATUS.address() + 10));
@@ -453,6 +451,13 @@ public class Vl53l0xI2c implements Vl53l0x {
         // "Wait until start bit has been cleared"
         startTimeout();
         while ((SYSRANGE_START.on(i2c).read() & 0x01) != 0) {
+            if (currentlyTimedOut()) {
+                setTimeoutFlag();
+                return 65535;
+            }
+        }
+        startTimeout();
+        while (!dataReady()) {
             if (currentlyTimedOut()) {
                 setTimeoutFlag();
                 return 65535;
