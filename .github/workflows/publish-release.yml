@@ -22,4 +22,4 @@ jobs:
         env:
           BINTRAY_USER: octylfractal
           BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
-        run: ./gradlew build publish
+        run: ./gradlew build bintrayPublish
