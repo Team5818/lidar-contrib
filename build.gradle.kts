@@ -7,14 +7,6 @@ plugins {
     `java-library`
     `maven-publish`
 }
-// disable maven upload for now, don't have a good spot for this...
-if (hasProperty("ossrhUsername")) {
-    setProperty("ossrhUsername", "")
-}
-
-tasks.afterReleaseBuild {
-    dependsOn("publishToMavenLocal")
-}
 
 tasks.processResources {
     from("LICENSE-vl53l1x.txt")
@@ -29,11 +21,31 @@ inciseBlue {
     }
     license()
     ide()
+}
 
-    nexus {
-        projectDescription.set("Pololu Device FRC Support")
-        coords("Team5818", "pololu-frc-contrib")
-        licenseName.set("GPL")
+release {
+    tagTemplate = "v\${version}"
+}
+
+java.withSourcesJar()
+java.withJavadocJar()
+
+publishing {
+    publications {
+        create<MavenPublication>("default") {
+            from(components["java"])
+        }
+    }
+
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/Team5818/pololu-frc-contrib")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
     }
 }
 
