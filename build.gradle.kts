@@ -47,7 +47,7 @@ bintray {
         repo = "maven-release"
         name = project.name
         userOrg = "team5818"
-        vcsUrl = "https://github.com/Team5818/pololu-frc-contrib.git"
+        vcsUrl = "https://github.com/Team5818/lidar-contrib.git"
         publish = true
         setLicenses("GPL-3.0-or-later")
         with(version) {

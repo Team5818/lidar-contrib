@@ -1,5 +1,5 @@
-pololu-frc-contrib
-==================
+lidar-contrib
+=============
 
 FRC compatibility layer for Pololu sensors.
 
