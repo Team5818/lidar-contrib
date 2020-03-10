@@ -4,6 +4,7 @@ plugins {
     id("net.researchgate.release") version "2.8.1"
     id("com.techshroom.incise-blue") version "0.5.7"
     id("net.ltgt.apt-idea") version "0.20"
+    id("com.jfrog.bintray") version "1.8.4"
     `java-library`
     `maven-publish`
 }
@@ -32,19 +33,25 @@ java.withJavadocJar()
 
 publishing {
     publications {
-        create<MavenPublication>("default") {
+        register<MavenPublication>("library") {
             from(components["java"])
         }
     }
+}
 
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/Team5818/pololu-frc-contrib")
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
-            }
+bintray {
+    user = System.getenv("BINTRAY_USER") ?: findProperty("bintray.user")?.toString()
+    key = System.getenv("BINTRAY_KEY") ?: findProperty("bintray.password")?.toString()
+    setPublications("library")
+    with(pkg) {
+        repo = "maven-release"
+        name = project.name
+        userOrg = "team5818"
+        vcsUrl = "https://github.com/Team5818/pololu-frc-contrib.git"
+        publish = true
+        setLicenses("GPL-3.0-or-later")
+        with(version) {
+            name = project.version.toString()
         }
     }
 }
