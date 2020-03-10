@@ -1,10 +1,8 @@
 import com.techshroom.inciseblue.commonLib
-import org.gradle.plugins.ide.idea.model.IdeaLanguageLevel
-import org.gradle.plugins.ide.idea.model.IdeaModel
 
 plugins {
-    id("net.researchgate.release") version "2.7.0"
-    id("com.techshroom.incise-blue") version "0.2.2"
+    id("net.researchgate.release") version "2.8.1"
+    id("com.techshroom.incise-blue") version "0.5.7"
     id("net.ltgt.apt-idea") version "0.20"
     `java-library`
     `maven-publish`
@@ -21,39 +19,37 @@ tasks.afterReleaseBuild {
 tasks.processResources {
     from("LICENSE-vl53l1x.txt")
     from("LICENSE-vl53l0x.txt")
+    from("LICENSE-vl6180x.txt")
     from("LICENSE.txt")
 }
 
 inciseBlue {
     util {
-        setJavaVersion("1.8")
+        setJavaVersion("11")
     }
     license()
     ide()
 
-    maven {
-        projectDescription = "Pololu Device FRC Support"
+    nexus {
+        projectDescription.set("Pololu Device FRC Support")
         coords("Team5818", "pololu-frc-contrib")
-        licenseName = "GPL"
+        licenseName.set("GPL")
     }
 }
 
 repositories {
     maven {
-        name = "FRC"
-        url = uri("http://first.wpi.edu/FRC/roborio/maven/release")
-        metadataSources {
-            mavenPom()
-        }
+        name = "WPI"
+        url = uri("https://frcmaven.wpi.edu/artifactory/release")
     }
 }
 
 dependencies {
-    commonLib("edu.wpi.first.hal", "hal", "2019.2.1") {
+    commonLib("edu.wpi.first.hal", "hal", "2020.3.2") {
         api(lib("java"))
     }
 
-    commonLib("com.google.auto.value", "auto-value", "1.6.2") {
+    commonLib("com.google.auto.value", "auto-value", "1.7") {
         compileOnly(lib("annotations"))
         annotationProcessor(lib())
     }
