@@ -1,25 +1,22 @@
 name: Publish Release
 
 on:
-    push:
-        tags:
-            - 'v*'
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   publish-release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout latest code
-        uses: actions/checkout@v1
-
+      - uses: actions/checkout@v2
       - name: Set up JDK 11
         uses: actions/setup-java@v1
         with:
           java-version: 11
-
       - name: Publish artifact
         env:
-          BINTRAY_USER: octylfractal
-          BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
-        run: ./gradlew build bintrayUpload
+          ORG_GRADLE_PROJECT_octylNetUsername: ARMABOT-GitHub-Uploader
+          ORG_GRADLE_PROJECT_octylNetPassword: ${{ secrets.ARMABOT_NEXUS_KEY }}
+        run: ./gradlew -s build publish

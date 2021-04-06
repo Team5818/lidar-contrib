@@ -1,12 +1,45 @@
-import com.techshroom.inciseblue.commonLib
+import org.cadixdev.gradle.licenser.LicenseExtension
 
 plugins {
-    id("net.researchgate.release") version "2.8.1"
-    id("com.techshroom.incise-blue") version "0.5.7"
-    id("net.ltgt.apt-idea") version "0.20"
-    id("com.jfrog.bintray") version "1.8.4"
     `java-library`
     `maven-publish`
+    id("net.researchgate.release") version "2.8.1"
+    id("org.cadixdev.licenser") version "0.5.1"
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(11))
+    }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "WPI"
+        url = uri("https://frcmaven.wpi.edu/artifactory/release")
+    }
+}
+
+dependencies {
+    api("edu.wpi.first.hal:hal-java:2020.3.2")
+
+    val autoValueVersion = "1.7.4"
+    compileOnly("com.google.auto.value:auto-value-annotations:$autoValueVersion")
+    annotationProcessor("com.google.auto.value:auto-value:$autoValueVersion")
+
+    compileOnly("com.techshroom", "jsr305-plus", "0.0.1")
+}
+
+configure<LicenseExtension> {
+    header = rootProject.file("HEADER.txt")
+    (this as ExtensionAware).extra.apply {
+        for (key in listOf("organization", "url")) {
+            set(key, rootProject.property(key))
+        }
+    }
 }
 
 tasks.processResources {
@@ -16,20 +49,9 @@ tasks.processResources {
     from("LICENSE.txt")
 }
 
-inciseBlue {
-    util {
-        setJavaVersion("11")
-    }
-    license()
-    ide()
-}
-
 release {
     tagTemplate = "v\${version}"
 }
-
-java.withSourcesJar()
-java.withJavadocJar()
 
 publishing {
     publications {
@@ -37,43 +59,13 @@ publishing {
             from(components["java"])
         }
     }
-}
-
-bintray {
-    user = System.getenv("BINTRAY_USER") ?: findProperty("bintray.user")?.toString()
-    key = System.getenv("BINTRAY_KEY") ?: findProperty("bintray.password")?.toString()
-    setPublications("library")
-    with(pkg) {
-        repo = "maven-release"
-        name = project.name
-        userOrg = "team5818"
-        vcsUrl = "https://github.com/Team5818/lidar-contrib.git"
-        publish = true
-        setLicenses("GPL-3.0-or-later")
-        with(version) {
-            name = project.version.toString()
+    repositories {
+        maven {
+            val releasesRepoUrl = "https://maven.octyl.net/repository/armabot-release"
+            val snapshotsRepoUrl = "https://maven.octyl.net/repository/armabot-snapshots"
+            name = "octylNet"
+            url = uri(if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
+            credentials(PasswordCredentials::class)
         }
     }
-}
-
-repositories {
-    maven {
-        name = "WPI"
-        url = uri("https://frcmaven.wpi.edu/artifactory/release")
-    }
-}
-
-dependencies {
-    commonLib("edu.wpi.first.hal", "hal", "2020.3.2") {
-        api(lib("java"))
-    }
-
-    commonLib("com.google.auto.value", "auto-value", "1.7") {
-        compileOnly(lib("annotations"))
-        annotationProcessor(lib())
-    }
-
-    compileOnly("com.techshroom", "jsr305-plus", "0.0.1")
-
-    testImplementation("junit:junit:4.12")
 }
