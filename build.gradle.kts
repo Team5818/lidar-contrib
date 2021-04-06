@@ -62,7 +62,7 @@ publishing {
     }
     repositories {
         maven {
-            val releasesRepoUrl = "https://maven.octyl.net/repository/armabot-release"
+            val releasesRepoUrl = "https://maven.octyl.net/repository/armabot-releases"
             val snapshotsRepoUrl = "https://maven.octyl.net/repository/armabot-snapshots"
             name = "octylNet"
             url = uri(if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
