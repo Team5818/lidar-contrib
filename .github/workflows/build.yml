@@ -13,3 +13,9 @@ jobs:
           java-version: 11
       - name: Build with Gradle
         run: ./gradlew -s build
+      - name: Publish Snapshot
+        if: github.ref == 'refs/heads/master'
+        env:
+          ORG_GRADLE_PROJECT_octylNetUsername: ARMABOT-GitHub-Uploader
+          ORG_GRADLE_PROJECT_octylNetPassword: ${{ secrets.ARMABOT_NEXUS_KEY }}
+        run: ./gradlew -s publish
