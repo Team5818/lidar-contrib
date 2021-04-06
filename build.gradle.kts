@@ -36,6 +36,7 @@ dependencies {
 configure<LicenseExtension> {
     header = rootProject.file("HEADER.txt")
     (this as ExtensionAware).extra.apply {
+        set("name", rootProject.name)
         for (key in listOf("organization", "url")) {
             set(key, rootProject.property(key))
         }
